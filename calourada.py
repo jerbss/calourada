@@ -377,6 +377,53 @@ class ArvoreAVL:
             self._pos_ordem_recursivo(raiz.esquerda, resultado)
             self._pos_ordem_recursivo(raiz.direita, resultado)
             resultado.append(raiz.dados)
+    
+    def visualizar_arvore(self):
+        """Gera uma visualização gráfica da árvore AVL"""
+        if not self.raiz:
+            return "Árvore vazia"
+        
+        linhas = []
+        self._desenhar_arvore(self.raiz, "", True, linhas)
+        return "\n".join(linhas)
+    
+    def _desenhar_arvore(self, no, prefixo, eh_ultimo, linhas):
+        """Desenha a árvore recursivamente"""
+        if no is not None:
+            # Adiciona o nó atual
+            conector = "└── " if eh_ultimo else "├── "
+            # Mostra ID, altura e fator de balanceamento
+            balance = self._balanceamento(no)
+            info_no = f"ID:{no.chave} (h:{no.altura}, b:{balance:+d})"
+            linhas.append(prefixo + conector + info_no)
+            
+            # Prepara prefixo para filhos
+            extensao = "    " if eh_ultimo else "│   "
+            novo_prefixo = prefixo + extensao
+            
+            # Conta filhos para determinar qual é o último
+            tem_esquerda = no.esquerda is not None
+            tem_direita = no.direita is not None
+            
+            # Desenha filhos (direita primeiro para aparecer em cima)
+            if tem_direita:
+                self._desenhar_arvore(no.direita, novo_prefixo, not tem_esquerda, linhas)
+            
+            if tem_esquerda:
+                self._desenhar_arvore(no.esquerda, novo_prefixo, True, linhas)
+    
+    def nivel_arvore(self):
+        """Retorna o nível (altura) máximo da árvore"""
+        return self._altura(self.raiz)
+    
+    def contar_nos(self):
+        """Conta o número total de nós na árvore"""
+        return self._contar_nos_recursivo(self.raiz)
+    
+    def _contar_nos_recursivo(self, no):
+        if not no:
+            return 0
+        return 1 + self._contar_nos_recursivo(no.esquerda) + self._contar_nos_recursivo(no.direita)
 
 # =====================================================
 # CLASSES DO SISTEMA
@@ -914,6 +961,7 @@ def menu_principal():
     print("10. 📊 Estatísticas")
     print("11. 🔧 Demonstrar Estruturas de Dados")
     print("12. 🍻 Gerenciar Bar da Calourada")
+    print("13. 🌳 Visualizar Árvore AVL")
     print("0.  🚪 Sair")
     print("-"*60)
 
@@ -1413,6 +1461,41 @@ def main():
 
                 except ValueError:
                     print("\n✗ ID da calourada deve ser um número")
+
+            elif opcao == "13": # Visualizar Árvore AVL
+                print("\n=== VISUALIZAÇÃO DA ÁRVORE AVL ===")
+                total_calouradas = len(sistema.eventos.in_ordem())
+                nivel_arvore = sistema.eventos.nivel_arvore()
+                total_nos = sistema.eventos.contar_nos()
+                
+                print(f"📊 Informações da Árvore:")
+                print(f"   • Total de calouradas: {total_calouradas}")
+                print(f"   • Altura da árvore: {nivel_arvore} níveis")
+                print(f"   • Total de nós: {total_nos}")
+                print(f"   • Balanceada: {'✅ Sim' if nivel_arvore <= 1.44 * (total_nos + 1) else '❌ Não'}")
+                
+                if total_calouradas == 0:
+                    print("\n🌳 Árvore vazia - crie algumas calouradas primeiro!")
+                else:
+                    print(f"\n🌳 Estrutura da Árvore AVL:")
+                    print("   (ID = chave, h = altura, b = balanceamento)")
+                    print("   Valores de balanceamento: -1, 0, +1 = árvore balanceada")
+                    print("-" * 50)
+                    visualizacao = sistema.eventos.visualizar_arvore()
+                    print(visualizacao)
+                    print("-" * 50)
+                    
+                    print(f"\n📝 Legenda:")
+                    print(f"   • Filhos à direita (IDs maiores) aparecem acima")
+                    print(f"   • Filhos à esquerda (IDs menores) aparecem abaixo")
+                    print(f"   • h: altura do nó (distância até folha mais distante)")
+                    print(f"   • b: fator de balanceamento (altura esq - altura dir)")
+                    
+                    if nivel_arvore >= 3:
+                        print(f"\n✅ Árvore atende ao requisito: NÍVEL ≥ 3")
+                    else:
+                        print(f"\n⚠️  Para atender ao requisito, crie mais calouradas!")
+                        print(f"    Necessário: pelo menos 4 calouradas para nível 3")
 
             else:
                 print("\n✗ Opção inválida! Tente novamente.")
