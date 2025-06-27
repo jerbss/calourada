@@ -395,6 +395,18 @@ class Participante:
     def __str__(self):
         return f"{self.nome} - {self.curso}/{self.unidade} ({self.periodo}º período)"
 
+class Pedido:
+    """Classe para representar um pedido no bar"""
+    def __init__(self, id_pedido, cliente_nome, itens):
+        self.id = id_pedido
+        self.cliente_nome = cliente_nome
+        self.itens = itens
+        self.timestamp = datetime.datetime.now()
+
+    def __str__(self):
+        itens_str = ', '.join(self.itens)
+        return f"Ticket #{self.id} | {self.cliente_nome} | Pedido: {itens_str} | Horário: {self.timestamp.strftime('%H:%M:%S')}"
+
 class Calourada:
     """Classe para representar uma calourada universitária"""
     def __init__(self, id_sequencial, nome, data, local, unidade_organizadora, descricao=""):
@@ -405,7 +417,9 @@ class Calourada:
         self.unidade_organizadora = unidade_organizadora
         self.descricao = descricao
         self.participantes = ListaLigada()
-        self.interessados = Fila()  # Lista de interessados
+        # Fila para o bar: quem já pagou e aguarda a entrega
+        self.fila_entrega = Fila()
+        self.contador_pedidos = 0
         self.data_criacao = datetime.datetime.now()
     
     def __str__(self):
@@ -564,9 +578,8 @@ class SistemaCalourada:
         
         # Verifica se já demonstrou interesse (pelo nome - mais prático)
         ja_inscrito = calourada.participantes.buscar(lambda p: p.nome.lower() == nome.lower())
-        ja_interessado = calourada.interessados.buscar(lambda p: p.nome.lower() == nome.lower())
         
-        if ja_inscrito or ja_interessado:
+        if ja_inscrito:
             return False, "Participante já demonstrou interesse nesta calourada"
         
         # Adiciona à lista de participantes confirmados
@@ -600,25 +613,6 @@ class SistemaCalourada:
             })
             
             return True, "Interesse cancelado com sucesso"
-        
-        # Remove da lista de interessados
-        removido_interessados = False
-        participantes_interessados = []
-        
-        # Reconstrói lista sem o participante
-        while calourada.interessados.tamanho > 0:
-            p = calourada.interessados.remover()
-            if p.nome.lower() != nome.lower():
-                participantes_interessados.append(p)
-            else:
-                removido_interessados = True
-        
-        # Reinsere participantes na lista
-        for p in participantes_interessados:
-            calourada.interessados.inserir(p)
-        
-        if removido_interessados:
-            return True, "Interesse cancelado da lista de interessados"
         
         return False, "Participante não encontrado"
     
@@ -659,13 +653,6 @@ class SistemaCalourada:
         else:
             resultado += "Nenhum participante interessado ainda.\n"
         
-        # Lista de interessados (pode ser usada para outros fins)
-        interessados = calourada.interessados.imprimir()
-        if interessados:
-            resultado += f"\nLISTA DE CONTATOS ({len(interessados)}):\n"
-            for i, p in enumerate(interessados, 1):
-                resultado += f"{i}. {p}\n"
-        
         return resultado
     
     def buscar_calourada(self, calourada_id):
@@ -687,49 +674,73 @@ class SistemaCalourada:
         
         return resultado
     
-    def remover_calourada(self, calourada_id):
-        """Remove uma calourada do sistema"""
+    # --- MÉTODOS PARA GERENCIAMENTO DO BAR ---
+
+    def entrar_fila_bar(self, calourada_id, cliente_nome, itens_pedido):
+        """Adiciona um novo pedido à fila de entrega do bar."""
         calourada = self.eventos.buscar(calourada_id)
         if not calourada:
-            return False, "Calourada não encontrada"
+            return False, "Calourada não encontrada."
+
+        if not cliente_nome or not itens_pedido:
+            return False, "Nome do cliente e itens do pedido são obrigatórios."
+
+        calourada.contador_pedidos += 1
+        novo_pedido = Pedido(calourada.contador_pedidos, cliente_nome, itens_pedido)
         
-        self.eventos.remover(calourada_id)
-        
-        # Registra no histórico
+        calourada.fila_entrega.inserir(novo_pedido)
+
         self.historico.inserir({
-            'acao': 'REMOVER_CALOURADA',
+            'acao': 'PEDIDO_BAR',
             'calourada_id': calourada_id,
-            'nome': calourada.nome,
-            'timestamp': datetime.datetime.now()
+            'participante': cliente_nome,
+            'timestamp': datetime.datetime.now(),
+            'detalhes': f"Ticket #{novo_pedido.id} para {', '.join(itens_pedido)}"
         })
+
+        return True, f"Pedido realizado com sucesso! Seu ticket é o número #{novo_pedido.id}."
+
+    def servir_pedido(self, calourada_id):
+        """Remove o próximo pedido da fila de entrega (serviço concluído)."""
+        calourada = self.eventos.buscar(calourada_id)
+        if not calourada:
+            return None, "Calourada não encontrada."
+
+        if calourada.fila_entrega.tamanho == 0:
+            return None, "Nenhum pedido na fila para servir."
+
+        pedido_servido = calourada.fila_entrega.remover()
         
-        return True, f"Calourada '{calourada.nome}' removida com sucesso"
-    
-    def ver_historico(self, limite=10):
-        """Mostra histórico de operações"""
-        if self.historico.tamanho == 0:
-            return "Nenhuma operação registrada"
+        self.historico.inserir({
+            'acao': 'SERVIÇO_BAR_CONCLUIDO',
+            'calourada_id': calourada_id,
+            'timestamp': datetime.datetime.now(),
+            'detalhes': f"Servido: {pedido_servido}"
+        })
+
+        return pedido_servido, f"Pedido #{pedido_servido.id} de {pedido_servido.cliente_nome} servido com sucesso."
+
+    def ver_filas_bar(self, calourada_id):
+        """Mostra o estado atual da fila de entrega do bar."""
+        calourada = self.eventos.buscar(calourada_id)
+        if not calourada:
+            return "Calourada não encontrada."
+
+        resultado = f"=== FILA DE ENTREGA DO BAR - {calourada.nome} ===\n"
         
-        resultado = f"=== HISTÓRICO DE OPERAÇÕES (últimas {limite}) ===\n"
-        operacoes = self.historico.imprimir()[:limite]
-        
-        for op in operacoes:
-            resultado += f"{op['timestamp'].strftime('%d/%m/%Y %H:%M')} - "
-            resultado += f"{op['acao']}"
-            
-            if 'evento_id' in op:
-                resultado += f" (ID: {op['evento_id']})"
-            if 'calourada_id' in op:
-                resultado += f" (ID: {op['calourada_id']})"
-            if 'participante' in op:
-                resultado += f" - {op['participante']}"
-            if 'detalhes' in op:
-                resultado += f" - {op['detalhes']}"
-            
-            resultado += "\n"
-        
+        pedidos = calourada.fila_entrega.imprimir()
+        if not pedidos:
+            resultado += "✅ Fila vazia! Todos os pedidos foram entregues.\n"
+        else:
+            resultado += f"Aguardando entrega: {len(pedidos)} pedido(s)\n"
+            resultado += "--------------------------------------------------\n"
+            for i, pedido in enumerate(pedidos, 1):
+                resultado += f"{i}º na fila: {pedido}\n"
+            resultado += "--------------------------------------------------\n"
+            resultado += f"Próximo a ser chamado: {pedidos[0]}\n"
+
         return resultado
-    
+
     def listar_unidades(self):
         """Lista todas as unidades acadêmicas e seus cursos"""
         resultado = "=== UNIDADES ACADÊMICAS - UFC CAMPUS PICI ===\n"
@@ -834,6 +845,53 @@ class SistemaCalourada:
         
         return resultado
 
+    def remover_calourada(self, calourada_id):
+        """Remove uma calourada do sistema"""
+        calourada = self.eventos.buscar(calourada_id)
+        if not calourada:
+            return False, "Calourada não encontrada"
+        
+        nome_calourada = calourada.nome
+        
+        # Remove da árvore
+        removido = self.eventos.remover(calourada_id)
+        
+        if removido:
+            # Registra no histórico
+            self.historico.inserir({
+                'acao': 'REMOVER_CALOURADA',
+                'calourada_id': calourada_id,
+                'timestamp': datetime.datetime.now(),
+                'detalhes': f"Calourada '{nome_calourada}' (ID: {calourada_id}) foi removida"
+            })
+            return True, f"Calourada '{nome_calourada}' removida com sucesso"
+        
+        return False, "Falha ao remover a calourada"
+
+    def ver_historico(self, limite=10):
+        """Mostra o histórico de operações do sistema"""
+        historico_completo = self.historico.imprimir()
+        
+        if not historico_completo:
+            return "Nenhuma operação no histórico"
+        
+        resultado = f"=== HISTÓRICO DE OPERAÇÕES (últimas {min(limite, len(historico_completo))}) ===\n"
+        
+        # Pega os últimos 'limite' itens
+        for i, operacao in enumerate(historico_completo[:limite], 1):
+            timestamp = operacao['timestamp'].strftime('%d/%m/%Y %H:%M:%S')
+            resultado += f"{i}. [{timestamp}] {operacao['acao']}\n"
+            
+            if 'detalhes' in operacao:
+                resultado += f"   Detalhes: {operacao['detalhes']}\n"
+            elif 'calourada_id' in operacao:
+                resultado += f"   ID da Calourada: {operacao['calourada_id']}\n"
+            
+            if 'participante' in operacao:
+                resultado += f"   Participante: {operacao['participante']}\n"
+        
+        return resultado
+
 # =====================================================
 # INTERFACE DO SISTEMA
 # =====================================================
@@ -855,6 +913,7 @@ def menu_principal():
     print("9.  🏫 Listar Unidades e Cursos")
     print("10. 📊 Estatísticas")
     print("11. 🔧 Demonstrar Estruturas de Dados")
+    print("12. 🍻 Gerenciar Bar da Calourada")
     print("0.  🚪 Sair")
     print("-"*60)
 
@@ -951,23 +1010,26 @@ def demonstrar_estruturas(sistema):
         print("     ⚠️  Histórico vazio")
     
     # 4. FILA - Demonstração conceitual
-    print(f"\n🚶 4. FILA (Lista de contatos para comunicação - FIFO)")
-    print(f"   📋 Função: Primeiro a entrar, primeiro a sair - controle de notificações")
+    print(f"\n🚶 4. FILA (Gerenciamento do Bar - FIFO)")
+    print(f"   📋 Função: Primeiro a pedir, primeiro a ser servido. Garante ordem justa.")
     
     # Conta filas de todas as calouradas
-    total_filas = sum(c.interessados.tamanho for c in calouradas)
-    print(f"   📊 Total de contatos em todas as filas: {total_filas}")
+    calouradas = sistema.eventos.in_ordem()
+    total_filas = 0
+    if calouradas:
+        total_filas = sum(c.fila_entrega.tamanho for c in calouradas)
+    
+    print(f"   📊 Total de pedidos aguardando em todas as calouradas: {total_filas}")
     
     if calouradas:
         for calourada in calouradas:
-            if calourada.interessados.tamanho > 0:
-                interessados = calourada.interessados.imprimir()
-                print(f"   📧 Fila de notificações '{calourada.nome}':")
-                print(f"     • Tamanho: {calourada.interessados.tamanho}")
-                for i, p in enumerate(interessados[:2], 1):
-                    print(f"       {i}. {p.nome} - {p.curso}")
-                if len(interessados) > 2:
-                    print(f"       ... e mais {len(interessados) - 2} na fila")
+            if calourada.fila_entrega.tamanho > 0:
+                pedidos = calourada.fila_entrega.imprimir()
+                print(f"   🍻 Fila do bar '{calourada.nome}':")
+                print(f"     • Tamanho: {calourada.fila_entrega.tamanho}")
+                print(f"     • Próximo a ser servido: Ticket #{pedidos[0].id} ({pedidos[0].cliente_nome})")
+                if len(pedidos) > 1:
+                    print(f"     • Último da fila: Ticket #{pedidos[-1].id} ({pedidos[-1].cliente_nome})")
     
     # Demonstração prática se houver dados
     if total_participantes > 0:
@@ -975,14 +1037,72 @@ def demonstrar_estruturas(sistema):
         print(f"   🔍 Busca rápida por ID na Árvore AVL: O(log n)")
         print(f"   ➕ Inserção de novo participante na Lista: O(1)")
         print(f"   📝 Registro de operação na Pilha: O(1)")
-        print(f"   📧 Enfileiramento para notificação: O(1)")
+        print(f"   🍻 Pedido no bar (enfileirar): O(1)")
         print(f"   ⚡ Total de operações realizadas: {sistema.historico.tamanho}")
     
     print(f"\n🎯 VANTAGENS DE CADA ESTRUTURA NO SISTEMA:")
     print(f"   🌳 Árvore AVL: Busca eficiente de calouradas mesmo com muitos eventos")
     print(f"   🔗 Lista Ligada: Flexibilidade para adicionar/remover participantes")
     print(f"   📚 Pilha: Rastreamento cronológico de ações para auditoria")
-    print(f"   🚶 Fila: Ordem justa para notificações e comunicações")
+    print(f"   🚶 Fila: Ordem justa para o bar, melhorando a experiência do usuário")
+
+def menu_bar(sistema, calourada_id):
+    """Exibe o menu de gerenciamento do bar para uma calourada específica."""
+    
+    calourada = sistema.eventos.buscar(calourada_id)
+    if not calourada:
+        print("✗ Calourada não encontrada.")
+        return
+
+    while True:
+        print("\n" + "="*60)
+        print(f"    🍻 GERENCIAMENTO DO BAR - {calourada.nome} 🍻")
+        print("="*60)
+        print("1. 💳 Fazer Pedido (Cliente/Caixa)")
+        print("2. 🛎️  Servir Próximo Pedido (Atendente)")
+        print("3. 📋 Ver Fila de Entrega")
+        print("0. ↩️  Voltar ao Menu Principal")
+        print("-"*60)
+
+        opcao_bar = input("Escolha uma opção para o bar: ").strip()
+
+        if opcao_bar == "0":
+            print("↩️  Voltando ao menu principal...")
+            break
+        
+        elif opcao_bar == "1": # Fazer Pedido
+            print("\n--- NOVO PEDIDO ---")
+            cliente_nome = input("Nome do cliente: ").strip()
+            if not cliente_nome:
+                print("✗ Nome do cliente é obrigatório.")
+                continue
+            
+            itens_input = input("Itens do pedido (separados por vírgula, ex: Cerveja, Agua): ").strip()
+            if not itens_input:
+                print("✗ O pedido não pode estar vazio.")
+                continue
+            
+            itens_pedido = [item.strip() for item in itens_input.split(',')]
+            
+            sucesso, mensagem = sistema.entrar_fila_bar(calourada_id, cliente_nome, itens_pedido)
+            print(f"\n{'🎉 ' if sucesso else '✗ '} {mensagem}")
+
+        elif opcao_bar == "2": # Servir Próximo Pedido
+            print("\n--- SERVINDO PEDIDO ---")
+            pedido, mensagem = sistema.servir_pedido(calourada_id)
+            if pedido:
+                print(f"✅ {mensagem}")
+                print(f"   Detalhes: {pedido}")
+            else:
+                print(f"ℹ️ {mensagem}")
+
+        elif opcao_bar == "3": # Ver Fila de Entrega
+            print("\n" + sistema.ver_filas_bar(calourada_id))
+        
+        else:
+            print("\n✗ Opção inválida!")
+        
+        input("\nPressione Enter para continuar...")
 
 def main():
     """Função principal do sistema"""
@@ -1274,6 +1394,26 @@ def main():
             elif opcao == "11":  # Demonstrar Estruturas
                 demonstrar_estruturas(sistema)
             
+            elif opcao == "12": # Gerenciar Bar
+                print("\n=== GERENCIAR BAR DA CALOURADA ===")
+                calouradas_disponiveis = sistema.listar_calouradas()
+                print(calouradas_disponiveis)
+                
+                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                    continue
+                
+                try:
+                    calourada_id_input = input("ID da calourada para gerenciar o bar: ").strip()
+                    if not calourada_id_input:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    calourada_id = int(calourada_id_input)
+                    menu_bar(sistema, calourada_id)
+
+                except ValueError:
+                    print("\n✗ ID da calourada deve ser um número")
+
             else:
                 print("\n✗ Opção inválida! Tente novamente.")
             
