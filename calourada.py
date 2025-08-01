@@ -1,4 +1,5 @@
 import datetime
+import unicodedata
 
 class NoLista:
     def __init__(self, dados):
@@ -386,7 +387,6 @@ class SistemaCalourada:
         }
     
     def normalizar_texto(self, texto):
-        import unicodedata
         texto_normalizado = unicodedata.normalize('NFD', texto.lower())
         texto_normalizado = ''.join(c for c in texto_normalizado if unicodedata.category(c) != 'Mn')
         texto_normalizado = ''.join(c if c.isalnum() else ' ' for c in texto_normalizado)
@@ -796,17 +796,20 @@ def menu_principal():
     print("    🎉 SISTEMA DE GERENCIAMENTO DE CALOURADAS 🎉")
     print("                UFC - CAMPUS PICI")
     print("="*60)
+    print("=== GERENCIAMENTO DE CALOURADAS ===")
     print("1.  🎉 Criar Calourada")
-    print("2.  👋 Demonstrar Interesse")
-    print("3.  ❌ Cancelar Interesse")
-    print("4.  📋 Listar Calouradas")
-    print("5.  👥 Listar Participantes de Calourada")
-    print("6.  🔍 Buscar Calourada")
-    print("7.  🗑️  Remover Calourada")
-    print("8.  📜 Ver Histórico")
-    print("9.  ↩️  Desfazer Última Operação")
-    print("10. 🔎 Pesquisar no Histórico")
-    print("0.  🚪 Sair")
+    print("2.  � Buscar Calourada")
+    print("3.  📋 Listar Calouradas")
+    print("4.  🗑️  Remover Calourada")
+    print("\n=== GERENCIAMENTO DE PARTICIPANTES ===")
+    print("5.  👋 Demonstrar Interesse")
+    print("6.  ❌ Cancelar Interesse")
+    print("7.  👥 Listar Participantes de Calourada")
+    print("\n=== HISTÓRICO E OPERAÇÕES ===")
+    print("8.  � Ver Histórico")
+    print("9.  � Pesquisar no Histórico")
+    print("10. ↩️  Desfazer Última Operação")
+    print("\n0.  🚪 Sair")
     print("-"*60)
 
 
@@ -830,7 +833,7 @@ def main():
                 print("Até logo! 🎉")
                 break
             
-            elif opcao == "1":
+            elif opcao == "1":  # Criar Calourada
                 print("\n=== CRIAR NOVA CALOURADA ===")
                 print("💡 Pressione Enter em qualquer campo para voltar ao menu")
                 
@@ -868,7 +871,190 @@ def main():
                 sucesso, mensagem = sistema.criar_calourada(nome, data, local, unidade, descricao)
                 print(f"\n{'🎉 ' if sucesso else '✗ '} {mensagem}")
             
-            elif opcao == "2":
+            elif opcao == "2":  # Buscar Calourada
+                calouradas_disponiveis = sistema.listar_calouradas()
+                print(calouradas_disponiveis)
+                
+                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                    continue
+                
+                try:
+                    calourada_id = int(input("ID da calourada: "))
+                    print("\n" + sistema.buscar_calourada(calourada_id))
+                except ValueError:
+                    print("\n✗ ID da calourada deve ser um número")
+                
+                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                    print("✗ Não há calouradas disponíveis para demonstrar interesse.")
+                    continue
+                
+                try:
+                    calourada_id_input = input("ID da calourada: ").strip()
+                    if not calourada_id_input:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    calourada_id = int(calourada_id_input)
+                    
+                    calourada = sistema.eventos.buscar(calourada_id)
+                    if not calourada:
+                        print("✗ Calourada não encontrada!")
+                        continue
+                    
+                    print(f"\n🎉 Demonstrando interesse na: {calourada.nome}")
+                    print(f"📅 Data: {calourada.data.strftime('%d/%m/%Y')}")
+                    print(f"📍 Local: {calourada.local}")
+                    print(f"🏛️  Organizada por: {sistema.unidades[calourada.unidade_organizadora]['nome']}")
+                    
+                    print("\n--- SEUS DADOS ---")
+                    nome = input("👤 Seu nome: ").strip()
+                    if not nome:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    print("\n🏫 UNIDADES ACADÊMICAS (digite a sigla ou nome completo):")
+                    for sigla, info in sistema.unidades.items():
+                        print(f"  {sigla} - {info['nome']}")
+                    
+                    unidade_input = input("\n🏫 Sua unidade: ").strip()
+                    if not unidade_input:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    unidade_validada = sistema.buscar_unidade_flexivel(unidade_input)
+                    if not unidade_validada:
+                        print(f"✗ Unidade '{unidade_input}' não encontrada!")
+                        continue
+                    
+                    print(f"\n📚 CURSOS DO {unidade_validada} (digite o número ou nome do curso):")
+                    cursos_unidade = sistema.unidades[unidade_validada]['cursos']
+                    for i, curso in enumerate(cursos_unidade, 1):
+                        print(f"  {i}. {curso}")
+                    
+                    curso_input = input("\n📚 Seu curso (número ou nome): ").strip()
+                    if not curso_input:
+                        print("✗ Curso é obrigatório!")
+                        continue
+                    
+                    curso_escolhido = None
+                    try:
+                        indice = int(curso_input)
+                        if 1 <= indice <= len(cursos_unidade):
+                            curso_escolhido = cursos_unidade[indice - 1]
+                        else:
+                            print(f"✗ Número inválido! Digite um número entre 1 e {len(cursos_unidade)}")
+                            continue
+                    except ValueError:
+                        curso_escolhido = sistema.buscar_curso_flexivel(curso_input, unidade_validada)
+                        if not curso_escolhido:
+                            print(f"✗ Curso '{curso_input}' não encontrado!")
+                            continue
+                    
+                    curso_input = curso_escolhido
+                    
+                    print("\n👥 Sexo:")
+                    print("  M - Masculino")
+                    print("  F - Feminino") 
+                    print("  O - Outro")
+                    sexo = input("👥 Selecione (M/F/O): ").strip().upper()
+                    
+                    if sexo not in ['M', 'F', 'O']:
+                        print("✗ Sexo deve ser M, F ou O!")
+                        continue
+                    
+                    periodo = input("📖 Período do curso (1-12): ").strip()
+                    
+                    sucesso, mensagem = sistema.demonstrar_interesse(calourada_id, nome, curso_input, unidade_input, sexo, periodo)
+                    print(f"\n{'🎉 ' if sucesso else '✗ '} {mensagem}")
+                    
+                except ValueError:
+                    print("\n✗ ID da calourada deve ser um número")
+            
+            elif opcao == "3":  # Listar Calouradas
+                print("\n" + sistema.listar_calouradas())
+                
+                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                    print("✗ Não há calouradas disponíveis.")
+                    continue
+                
+                try:
+                    calourada_id_input = input("ID da calourada: ").strip()
+                    if not calourada_id_input:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    calourada_id = int(calourada_id_input)
+                    
+                    calourada = sistema.eventos.buscar(calourada_id)
+                    if not calourada:
+                        print("✗ Calourada não encontrada!")
+                        continue
+                    
+                    print(f"\n🎉 Calourada: {calourada.nome}")
+                    participantes = calourada.participantes.imprimir()
+                    
+                    if not participantes:
+                        print("✗ Nenhum participante nesta calourada ainda.")
+                        continue
+                    
+                    print("\n👥 PARTICIPANTES INTERESSADOS:")
+                    for i, p in enumerate(participantes, 1):
+                        print(f"  {i}. {p.nome}")
+                    
+                    participante_input = input("\n👤 Participante para cancelar (número ou nome): ").strip()
+                    if not participante_input:
+                        print("↩️  Voltando ao menu principal...")
+                        continue
+                    
+                    nome_participante = None
+                    try:
+                        indice = int(participante_input)
+                        if 1 <= indice <= len(participantes):
+                            nome_participante = participantes[indice - 1].nome
+                        else:
+                            print(f"✗ Número inválido! Digite um número entre 1 e {len(participantes)}")
+                            continue
+                    except ValueError:
+                        nome_participante = participante_input
+                    
+                    sucesso, mensagem = sistema.cancelar_interesse(calourada_id, nome_participante)
+                    print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
+                    
+                except ValueError:
+                    print("\n✗ ID da calourada deve ser um número")
+            
+            elif opcao == "4":  # Remover Calourada
+                calouradas_disponiveis = sistema.listar_calouradas()
+                print(calouradas_disponiveis)
+                
+                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                    continue
+                
+                try:
+                    calourada_id = int(input("ID da calourada: "))
+                    
+                    calourada = sistema.eventos.buscar(calourada_id)
+                    if not calourada:
+                        print("✗ Calourada não encontrada!")
+                        continue
+                    
+                    print(f"\n⚠️  Você está prestes a remover:")
+                    print(f"🎉 {calourada.nome}")
+                    print(f"📅 {calourada.data.strftime('%d/%m/%Y')}")
+                    print(f"👥 {calourada.participantes.tamanho} participantes interessados")
+                    
+                    confirmacao = input("\n❓ Tem certeza? (s/N): ").lower()
+                    
+                    if confirmacao == 's':
+                        sucesso, mensagem = sistema.remover_calourada(calourada_id)
+                        print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
+                    else:
+                        print("\n✓ Operação cancelada")
+                        
+                except ValueError:
+                    print("\n✗ ID da calourada deve ser um número")
+            
+            elif opcao == "5":  # Demonstrar Interesse
                 print("\n=== DEMONSTRAR INTERESSE ===")
                 print("💡 Pressione Enter em qualquer campo para voltar ao menu")
                 calouradas_disponiveis = sistema.listar_calouradas()
@@ -960,7 +1146,7 @@ def main():
                 except ValueError:
                     print("\n✗ ID da calourada deve ser um número")
             
-            elif opcao == "3":
+            elif opcao == "6":  # Cancelar Interesse
                 print("\n=== CANCELAR INTERESSE ===")
                 print("💡 Pressione Enter em qualquer campo para voltar ao menu")
                 calouradas_disponiveis = sistema.listar_calouradas()
@@ -1016,10 +1202,7 @@ def main():
                 except ValueError:
                     print("\n✗ ID da calourada deve ser um número")
             
-            elif opcao == "4":
-                print("\n" + sistema.listar_calouradas())
-            
-            elif opcao == "5":
+            elif opcao == "7":  # Listar Participantes de Calourada
                 calouradas_disponiveis = sistema.listar_calouradas()
                 print(calouradas_disponiveis)
                 
@@ -1032,51 +1215,7 @@ def main():
                 except ValueError:
                     print("\n✗ ID da calourada deve ser um número")
             
-            elif opcao == "6":
-                calouradas_disponiveis = sistema.listar_calouradas()
-                print(calouradas_disponiveis)
-                
-                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
-                    continue
-                
-                try:
-                    calourada_id = int(input("ID da calourada: "))
-                    print("\n" + sistema.buscar_calourada(calourada_id))
-                except ValueError:
-                    print("\n✗ ID da calourada deve ser um número")
-            
-            elif opcao == "7":
-                calouradas_disponiveis = sistema.listar_calouradas()
-                print(calouradas_disponiveis)
-                
-                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
-                    continue
-                
-                try:
-                    calourada_id = int(input("ID da calourada: "))
-                    
-                    calourada = sistema.eventos.buscar(calourada_id)
-                    if not calourada:
-                        print("✗ Calourada não encontrada!")
-                        continue
-                    
-                    print(f"\n⚠️  Você está prestes a remover:")
-                    print(f"🎉 {calourada.nome}")
-                    print(f"📅 {calourada.data.strftime('%d/%m/%Y')}")
-                    print(f"👥 {calourada.participantes.tamanho} participantes interessados")
-                    
-                    confirmacao = input("\n❓ Tem certeza? (s/N): ").lower()
-                    
-                    if confirmacao == 's':
-                        sucesso, mensagem = sistema.remover_calourada(calourada_id)
-                        print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
-                    else:
-                        print("\n✓ Operação cancelada")
-                        
-                except ValueError:
-                    print("\n✗ ID da calourada deve ser um número")
-            
-            elif opcao == "8":
+            elif opcao == "8":  # Ver Histórico
                 try:
                     limite = input("Quantas operações mostrar? (padrão 10): ")
                     limite = int(limite) if limite else 10
@@ -1084,7 +1223,46 @@ def main():
                 except ValueError:
                     print("\n" + sistema.ver_historico())
                     
-            elif opcao == "9":
+            elif opcao == "9":  # Pesquisar no Histórico
+                print("\n=== PESQUISAR NO HISTÓRICO ===")
+                print("💡 Esta funcionalidade permite buscar operações específicas no histórico")
+                
+                print("\nTipo de busca:")
+                print("1. Buscar por tipo de ação (CRIAR_CALOURADA, DEMONSTRAR_INTERESSE, etc.)")
+                print("2. Buscar por nome de participante")
+                print("3. Buscar por ID de calourada")
+                print("4. Buscar nos detalhes")
+                
+                tipo_busca_opcao = input("Escolha uma opção (1-4): ").strip()
+                
+                tipo_busca = None
+                if tipo_busca_opcao == "1":
+                    tipo_busca = "acao"
+                    print("\nTipos de ação disponíveis:")
+                    print("- CRIAR_CALOURADA")
+                    print("- DEMONSTRAR_INTERESSE")
+                    print("- CANCELAR_INTERESSE")
+                    print("- REMOVER_CALOURADA")
+                    print("- DESFAZER")
+                elif tipo_busca_opcao == "2":
+                    tipo_busca = "participante"
+                elif tipo_busca_opcao == "3":
+                    tipo_busca = "calourada_id"
+                elif tipo_busca_opcao == "4":
+                    tipo_busca = "detalhes"
+                else:
+                    print("✗ Opção inválida!")
+                    continue
+                
+                termo_busca = input(f"\nDigite o termo para buscar por {tipo_busca}: ").strip()
+                if not termo_busca:
+                    print("✗ Termo de busca não pode ser vazio!")
+                    continue
+                
+                resultado_busca = sistema.buscar_no_historico(termo_busca, tipo_busca)
+                print("\n" + resultado_busca)
+                    
+            elif opcao == "10":  # Desfazer Última Operação
                 print("\n=== DESFAZER ÚLTIMA OPERAÇÃO ===")
                 print("⚠️  Esta operação irá desfazer a última ação registrada no histórico.")
                 
@@ -1099,10 +1277,6 @@ def main():
                     print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
                 else:
                     print("\n✓ Operação cancelada")
-                    
-            elif opcao == "10":
-                print("\n=== PESQUISAR NO HISTÓRICO ===")
-                print("💡 Esta funcionalidade permite buscar operações específicas no histórico")
                 
                 print("\nTipo de busca:")
                 print("1. Buscar por tipo de ação (CRIAR_CALOURADA, DEMONSTRAR_INTERESSE, etc.)")
