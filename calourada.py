@@ -907,7 +907,7 @@ def menu_principal():
     print("="*60)
     print("=== GERENCIAMENTO DE CALOURADAS ===")
     print("1.  🎉 Criar Calourada")
-    print("2.  � Buscar Calourada")
+    print("2.  🔍 Buscar Calourada")
     print("3.  📋 Listar Calouradas")
     print("4.  🗑️  Remover Calourada")
     print("\n=== GERENCIAMENTO DE PARTICIPANTES ===")
@@ -915,15 +915,11 @@ def menu_principal():
     print("6.  ❌ Cancelar Interesse")
     print("7.  👥 Listar Participantes de Calourada")
     print("\n=== HISTÓRICO E OPERAÇÕES ===")
-    print("8.  � Ver Histórico")
-    print("9.  � Pesquisar no Histórico")
+    print("8.  📜 Ver Histórico")
+    print("9.  🔎 Pesquisar no Histórico")
     print("10. ↩️  Desfazer Última Operação")
     print("\n0.  🚪 Sair")
     print("-"*60)
-
-
-
-
 
 def main():
     sistema = SistemaCalourada()
