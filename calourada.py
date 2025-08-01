@@ -51,54 +51,6 @@ class ListaLigada:
             atual = atual.proximo
         return elementos
 
-class NoFila:
-    def __init__(self, dados):
-        self.dados = dados
-        self.proximo = None
-
-class Fila:
-    def __init__(self):
-        self.frente = None
-        self.tras = None
-        self.tamanho = 0
-    
-    def inserir(self, dados):
-        novo_no = NoFila(dados)
-        if not self.tras:
-            self.frente = self.tras = novo_no
-        else:
-            self.tras.proximo = novo_no
-            self.tras = novo_no
-        self.tamanho += 1
-        return True
-    
-    def remover(self):
-        if not self.frente:
-            return None
-        
-        dados = self.frente.dados
-        self.frente = self.frente.proximo
-        if not self.frente:
-            self.tras = None
-        self.tamanho -= 1
-        return dados
-    
-    def buscar(self, criterio_busca):
-        atual = self.frente
-        while atual:
-            if criterio_busca(atual.dados):
-                return atual.dados
-            atual = atual.proximo
-        return None
-    
-    def imprimir(self):
-        elementos = []
-        atual = self.frente
-        while atual:
-            elementos.append(atual.dados)
-            atual = atual.proximo
-        return elementos
-
 class NoPilha:
     def __init__(self, dados):
         self.dados = dados
@@ -116,15 +68,6 @@ class Pilha:
         self.tamanho += 1
         return True
     
-    def remover(self):
-        if not self.topo:
-            return None
-        
-        dados = self.topo.dados
-        self.topo = self.topo.proximo
-        self.tamanho -= 1
-        return dados
-    
     def buscar(self, criterio_busca):
         atual = self.topo
         while atual:
@@ -132,6 +75,15 @@ class Pilha:
                 return atual.dados
             atual = atual.proximo
         return None
+    
+    def remover(self):
+        if not self.topo:
+            return None
+            
+        dados = self.topo.dados
+        self.topo = self.topo.proximo
+        self.tamanho -= 1
+        return dados
     
     def imprimir(self):
         elementos = []
@@ -370,17 +322,6 @@ class Participante:
     def __str__(self):
         return f"{self.nome} - {self.curso}/{self.unidade} ({self.periodo}º período)"
 
-class Pedido:
-    def __init__(self, id_pedido, cliente_nome, itens):
-        self.id = id_pedido
-        self.cliente_nome = cliente_nome
-        self.itens = itens
-        self.timestamp = datetime.datetime.now()
-
-    def __str__(self):
-        itens_str = ', '.join(self.itens)
-        return f"Ticket #{self.id} | {self.cliente_nome} | Pedido: {itens_str} | Horário: {self.timestamp.strftime('%H:%M:%S')}"
-
 class Calourada:
     def __init__(self, id_sequencial, nome, data, local, unidade_organizadora, descricao=""):
         self.id = id_sequencial
@@ -390,8 +331,6 @@ class Calourada:
         self.unidade_organizadora = unidade_organizadora
         self.descricao = descricao
         self.participantes = ListaLigada()
-        self.fila_entrega = Fila()
-        self.contador_pedidos = 0
         self.data_criacao = datetime.datetime.now()
     
     def __str__(self):
@@ -619,67 +558,7 @@ class SistemaCalourada:
         
         return resultado
 
-    def entrar_fila_bar(self, calourada_id, cliente_nome, itens_pedido):
-        calourada = self.eventos.buscar(calourada_id)
-        if not calourada:
-            return False, "Calourada não encontrada."
 
-        if not cliente_nome or not itens_pedido:
-            return False, "Nome do cliente e itens do pedido são obrigatórios."
-
-        calourada.contador_pedidos += 1
-        novo_pedido = Pedido(calourada.contador_pedidos, cliente_nome, itens_pedido)
-        
-        calourada.fila_entrega.inserir(novo_pedido)
-
-        self.historico.inserir({
-            'acao': 'PEDIDO_BAR',
-            'calourada_id': calourada_id,
-            'participante': cliente_nome,
-            'timestamp': datetime.datetime.now(),
-            'detalhes': f"Ticket #{novo_pedido.id} para {', '.join(itens_pedido)}"
-        })
-
-        return True, f"Pedido realizado com sucesso! Seu ticket é o número #{novo_pedido.id}."
-
-    def servir_pedido(self, calourada_id):
-        calourada = self.eventos.buscar(calourada_id)
-        if not calourada:
-            return None, "Calourada não encontrada."
-
-        if calourada.fila_entrega.tamanho == 0:
-            return None, "Nenhum pedido na fila para servir."
-
-        pedido_servido = calourada.fila_entrega.remover()
-        
-        self.historico.inserir({
-            'acao': 'SERVIÇO_BAR_CONCLUIDO',
-            'calourada_id': calourada_id,
-            'timestamp': datetime.datetime.now(),
-            'detalhes': f"Servido: {pedido_servido}"
-        })
-
-        return pedido_servido, f"Pedido #{pedido_servido.id} de {pedido_servido.cliente_nome} servido com sucesso."
-
-    def ver_filas_bar(self, calourada_id):
-        calourada = self.eventos.buscar(calourada_id)
-        if not calourada:
-            return "Calourada não encontrada."
-
-        resultado = f"=== FILA DE ENTREGA DO BAR - {calourada.nome} ===\n"
-        
-        pedidos = calourada.fila_entrega.imprimir()
-        if not pedidos:
-            resultado += "✅ Fila vazia! Todos os pedidos foram entregues.\n"
-        else:
-            resultado += f"Aguardando entrega: {len(pedidos)} pedido(s)\n"
-            resultado += "--------------------------------------------------\n"
-            for i, pedido in enumerate(pedidos, 1):
-                resultado += f"{i}º na fila: {pedido}\n"
-            resultado += "--------------------------------------------------\n"
-            resultado += f"Próximo a ser chamado: {pedidos[0]}\n"
-
-        return resultado
 
     def listar_unidades(self):
         resultado = "=== UNIDADES ACADÊMICAS - UFC CAMPUS PICI ===\n"
@@ -812,6 +691,105 @@ class SistemaCalourada:
                 resultado += f"   Participante: {operacao['participante']}\n"
         
         return resultado
+        
+    def desfazer_ultima_operacao(self):
+        if self.historico.tamanho == 0:
+            return False, "Não há operações no histórico para desfazer"
+        
+        ultima_operacao = self.historico.remover()
+        
+        if not ultima_operacao:
+            return False, "Falha ao recuperar a última operação"
+        
+        acao = ultima_operacao['acao']
+        mensagem = f"Operação '{acao}' desfeita com sucesso"
+        
+        # Dependendo do tipo de ação desfeita, podemos precisar reverter outras mudanças no sistema
+        if acao == 'CRIAR_CALOURADA' and 'calourada_id' in ultima_operacao:
+            self.eventos.remover(ultima_operacao['calourada_id'])
+            mensagem = f"Calourada de ID {ultima_operacao['calourada_id']} removida ao desfazer criação"
+            
+        elif acao == 'DEMONSTRAR_INTERESSE' and 'calourada_id' in ultima_operacao and 'participante' in ultima_operacao:
+            calourada = self.eventos.buscar(ultima_operacao['calourada_id'])
+            if calourada:
+                calourada.participantes.remover(lambda p: p.nome == ultima_operacao['participante'])
+                mensagem = f"Interesse de {ultima_operacao['participante']} cancelado ao desfazer"
+                
+        elif acao == 'CANCELAR_INTERESSE':
+            mensagem = "Operação de cancelamento de interesse desfeita, mas o participante precisa demonstrar interesse novamente"
+            
+        elif acao == 'REMOVER_CALOURADA':
+            mensagem = "Operação de remoção de calourada desfeita, mas a calourada precisa ser criada novamente"
+        
+        # Registramos a operação de desfazer no histórico
+        self.historico.inserir({
+            'acao': 'DESFAZER',
+            'timestamp': datetime.datetime.now(),
+            'detalhes': f"Desfeita operação: {acao}"
+        })
+        
+        return True, mensagem
+        
+    def buscar_no_historico(self, termo_busca, tipo_busca="acao"):
+        """
+        Busca operações específicas no histórico usando o método buscar da Pilha
+        
+        Parâmetros:
+        - termo_busca: Termo a ser pesquisado
+        - tipo_busca: Tipo de busca (acao, participante, calourada_id)
+        
+        Retorna:
+        - Uma string formatada com os resultados da busca
+        """
+        if self.historico.tamanho == 0:
+            return "Histórico vazio. Nenhuma operação para pesquisar."
+            
+        termo_busca_lower = str(termo_busca).lower()
+        
+        # Função que implementa o critério de busca para o método buscar da Pilha
+        def criterio_busca(operacao):
+            if tipo_busca == "acao":
+                return termo_busca_lower in operacao.get('acao', '').lower()
+            elif tipo_busca == "participante" and 'participante' in operacao:
+                return termo_busca_lower in operacao.get('participante', '').lower()
+            elif tipo_busca == "calourada_id" and 'calourada_id' in operacao:
+                return str(operacao.get('calourada_id', '')) == termo_busca_lower
+            elif tipo_busca == "detalhes" and 'detalhes' in operacao:
+                return termo_busca_lower in operacao.get('detalhes', '').lower()
+            return False
+        
+        # Usamos o método buscar da Pilha para encontrar a primeira ocorrência
+        resultado = self.historico.buscar(criterio_busca)
+        
+        if not resultado:
+            return f"Nenhuma operação encontrada com o termo '{termo_busca}' no campo '{tipo_busca}'."
+        
+        # Para encontrar todas as ocorrências, precisamos percorrer todo o histórico
+        todas_ocorrencias = []
+        historico_completo = self.historico.imprimir()
+        
+        for operacao in historico_completo:
+            if criterio_busca(operacao):
+                todas_ocorrencias.append(operacao)
+        
+        # Formatamos o resultado
+        resultado_txt = f"=== RESULTADOS DA PESQUISA NO HISTÓRICO ===\n"
+        resultado_txt += f"Termo pesquisado: '{termo_busca}' no campo '{tipo_busca}'\n"
+        resultado_txt += f"Ocorrências encontradas: {len(todas_ocorrencias)}\n\n"
+        
+        for i, operacao in enumerate(todas_ocorrencias, 1):
+            timestamp = operacao['timestamp'].strftime('%d/%m/%Y %H:%M:%S')
+            resultado_txt += f"{i}. [{timestamp}] {operacao['acao']}\n"
+            
+            if 'detalhes' in operacao:
+                resultado_txt += f"   Detalhes: {operacao['detalhes']}\n"
+            elif 'calourada_id' in operacao:
+                resultado_txt += f"   ID da Calourada: {operacao['calourada_id']}\n"
+            
+            if 'participante' in operacao:
+                resultado_txt += f"   Participante: {operacao['participante']}\n"
+                
+        return resultado_txt
 
 def menu_principal():
     print("\n" + "="*60)
@@ -826,190 +804,14 @@ def menu_principal():
     print("6.  🔍 Buscar Calourada")
     print("7.  🗑️  Remover Calourada")
     print("8.  📜 Ver Histórico")
-    print("9.  🏫 Listar Unidades e Cursos")
-    print("10. 📊 Estatísticas")
-    print("11. 🔧 Demonstrar Estruturas de Dados")
-    print("12. 🍻 Gerenciar Bar da Calourada")
-    print("13. 🌳 Visualizar Árvore AVL")
+    print("9.  ↩️  Desfazer Última Operação")
+    print("10. 🔎 Pesquisar no Histórico")
     print("0.  🚪 Sair")
     print("-"*60)
 
-def demonstrar_estruturas(sistema):
-    print("\n=== DEMONSTRAÇÃO INTERATIVA DAS ESTRUTURAS DE DADOS ===")
-    print("Esta demonstração mostra como cada estrutura funciona no sistema real.")
-    
-    calouradas = sistema.eventos.in_ordem()
-    total_participantes = sum(c.participantes.tamanho for c in calouradas)
-    
-    print(f"\n📊 ESTADO ATUAL DO SISTEMA:")
-    print(f"   • Calouradas cadastradas: {len(calouradas)}")
-    print(f"   • Participantes interessados: {total_participantes}")
-    print(f"   • Operações no histórico: {sistema.historico.tamanho}")
-    
-    print(f"\n🌳 1. ÁRVORE AVL (Organização eficiente de calouradas por ID)")
-    print(f"   📋 Função: Busca rápida O(log n), inserção e remoção balanceadas")
-    
-    if len(calouradas) > 0:
-        print(f"   📊 Estrutura atual:")
-        for calourada in calouradas:
-            participantes_str = f"({calourada.participantes.tamanho} participantes)" if calourada.participantes.tamanho > 0 else "(sem participantes)"
-            print(f"     • ID {calourada.id}: {calourada.nome} {participantes_str}")
-        
-        print(f"   🔍 Percursos da árvore:")
-        in_ordem = [f"ID {c.id}" for c in sistema.eventos.in_ordem()]
-        pre_ordem = [f"ID {c.id}" for c in sistema.eventos.pre_ordem()]
-        pos_ordem = [f"ID {c.id}" for c in sistema.eventos.pos_ordem()]
-        
-        print(f"     • In-ordem (crescente): {' → '.join(in_ordem)}")
-        print(f"     • Pré-ordem (raiz primeiro): {' → '.join(pre_ordem)}")
-        print(f"     • Pós-ordem (filhos primeiro): {' → '.join(pos_ordem)}")
-        
-        print(f"   ⚡ Teste de busca eficiente:")
-        if calouradas:
-            teste_id = calouradas[0].id
-            resultado = sistema.eventos.buscar(teste_id)
-            print(f"     • Buscar ID {teste_id}: {'✓ Encontrado' if resultado else '✗ Não encontrado'} - {resultado.nome if resultado else 'N/A'}")
-    else:
-        print("     ⚠️  Nenhuma calourada cadastrada para demonstração")
-    
-    print(f"\n🔗 2. LISTA LIGADA (Participantes interessados em cada calourada)")
-    print(f"   📋 Função: Inserção O(1), percurso sequencial, remoção por critério")
-    
-    if calouradas:
-        for calourada in calouradas:
-            participantes = calourada.participantes.imprimir()
-            print(f"   📝 Calourada '{calourada.nome}' (ID {calourada.id}):")
-            print(f"     • Tamanho da lista: {calourada.participantes.tamanho}")
-            if participantes:
-                print(f"     • Participantes (mais recente primeiro):")
-                for i, p in enumerate(participantes[:3], 1):
-                    print(f"       {i}. {p.nome} - {p.curso} ({p.periodo}º período)")
-                if len(participantes) > 3:
-                    print(f"       ... e mais {len(participantes) - 3} participantes")
-            else:
-                print(f"     • Lista vazia")
-    else:
-        print("     ⚠️  Nenhuma calourada para demonstrar listas")
-    
-    print(f"\n📚 3. PILHA (Histórico de operações - LIFO)")
-    print(f"   📋 Função: Última operação primeiro, controle de histórico")
-    print(f"   📊 Tamanho atual: {sistema.historico.tamanho}")
-    
-    if sistema.historico.tamanho > 0:
-        operacoes = sistema.historico.imprimir()[:5]
-        print(f"   ⏰ Últimas 5 operações (mais recente no topo):")
-        for i, op in enumerate(operacoes, 1):
-            acao_emoji = {
-                'CRIAR_CALOURADA': '🎉',
-                'DEMONSTRAR_INTERESSE': '👋',
-                'CANCELAR_INTERESSE': '❌',
-                'REMOVER_CALOURADA': '🗑️'
-            }.get(op['acao'], '📝')
-            
-            detalhes = ""
-            if 'detalhes' in op:
-                detalhes = f" - {op['detalhes']}"
-            elif 'participante' in op:
-                detalhes = f" - {op['participante']}"
-            
-            print(f"     {i}. {acao_emoji} {op['acao']} {detalhes}")
-            print(f"        ⏱️  {op['timestamp'].strftime('%d/%m/%Y %H:%M:%S')}")
-        
-        print(f"   🔄 Demonstração de remoção (pop):")
-        print(f"     • Próxima operação a ser removida: {operacoes[0]['acao']}")
-    else:
-        print("     ⚠️  Histórico vazio")
-    
-    print(f"\n🚶 4. FILA (Gerenciamento do Bar - FIFO)")
-    print(f"   📋 Função: Primeiro a pedir, primeiro a ser servido. Garante ordem justa.")
-    
-    calouradas = sistema.eventos.in_ordem()
-    total_filas = 0
-    if calouradas:
-        total_filas = sum(c.fila_entrega.tamanho for c in calouradas)
-    
-    print(f"   📊 Total de pedidos aguardando em todas as calouradas: {total_filas}")
-    
-    if calouradas:
-        for calourada in calouradas:
-            if calourada.fila_entrega.tamanho > 0:
-                pedidos = calourada.fila_entrega.imprimir()
-                print(f"   🍻 Fila do bar '{calourada.nome}':")
-                print(f"     • Tamanho: {calourada.fila_entrega.tamanho}")
-                print(f"     • Próximo a ser servido: Ticket #{pedidos[0].id} ({pedidos[0].cliente_nome})")
-                if len(pedidos) > 1:
-                    print(f"     • Último da fila: Ticket #{pedidos[-1].id} ({pedidos[-1].cliente_nome})")
-    
-    if total_participantes > 0:
-        print(f"\n💡 DEMONSTRAÇÃO PRÁTICA:")
-        print(f"   🔍 Busca rápida por ID na Árvore AVL: O(log n)")
-        print(f"   ➕ Inserção de novo participante na Lista: O(1)")
-        print(f"   📝 Registro de operação na Pilha: O(1)")
-        print(f"   🍻 Pedido no bar (enfileirar): O(1)")
-        print(f"   ⚡ Total de operações realizadas: {sistema.historico.tamanho}")
-    
-    print(f"\n🎯 VANTAGENS DE CADA ESTRUTURA NO SISTEMA:")
-    print(f"   🌳 Árvore AVL: Busca eficiente de calouradas mesmo com muitos eventos")
-    print(f"   🔗 Lista Ligada: Flexibilidade para adicionar/remover participantes")
-    print(f"   📚 Pilha: Rastreamento cronológico de ações para auditoria")
-    print(f"   🚶 Fila: Ordem justa para o bar, melhorando a experiência do usuário")
 
-def menu_bar(sistema, calourada_id):
-    
-    calourada = sistema.eventos.buscar(calourada_id)
-    if not calourada:
-        print("✗ Calourada não encontrada.")
-        return
 
-    while True:
-        print("\n" + "="*60)
-        print(f"    🍻 GERENCIAMENTO DO BAR - {calourada.nome} 🍻")
-        print("="*60)
-        print("1. 💳 Fazer Pedido (Cliente/Caixa)")
-        print("2. 🛎️  Servir Próximo Pedido (Atendente)")
-        print("3. 📋 Ver Fila de Entrega")
-        print("0. ↩️  Voltar ao Menu Principal")
-        print("-"*60)
 
-        opcao_bar = input("Escolha uma opção para o bar: ").strip()
-
-        if opcao_bar == "0":
-            print("↩️  Voltando ao menu principal...")
-            break
-        
-        elif opcao_bar == "1":
-            print("\n--- NOVO PEDIDO ---")
-            cliente_nome = input("Nome do cliente: ").strip()
-            if not cliente_nome:
-                print("✗ Nome do cliente é obrigatório.")
-                continue
-            
-            itens_input = input("Itens do pedido (separados por vírgula, ex: Cerveja, Agua): ").strip()
-            if not itens_input:
-                print("✗ O pedido não pode estar vazio.")
-                continue
-            
-            itens_pedido = [item.strip() for item in itens_input.split(',')]
-            
-            sucesso, mensagem = sistema.entrar_fila_bar(calourada_id, cliente_nome, itens_pedido)
-            print(f"\n{'🎉 ' if sucesso else '✗ '} {mensagem}")
-
-        elif opcao_bar == "2":
-            print("\n--- SERVINDO PEDIDO ---")
-            pedido, mensagem = sistema.servir_pedido(calourada_id)
-            if pedido:
-                print(f"✅ {mensagem}")
-                print(f"   Detalhes: {pedido}")
-            else:
-                print(f"ℹ️ {mensagem}")
-
-        elif opcao_bar == "3":
-            print("\n" + sistema.ver_filas_bar(calourada_id))
-        
-        else:
-            print("\n✗ Opção inválida!")
-        
-        input("\nPressione Enter para continuar...")
 
 def main():
     sistema = SistemaCalourada()
@@ -1281,71 +1083,62 @@ def main():
                     print("\n" + sistema.ver_historico(limite))
                 except ValueError:
                     print("\n" + sistema.ver_historico())
-            
+                    
             elif opcao == "9":
-                print("\n" + sistema.listar_unidades())
-            
-            elif opcao == "10":
-                print("\n" + sistema.estatisticas())
-            
-            elif opcao == "11":
-                demonstrar_estruturas(sistema)
-            
-            elif opcao == "12":
-                print("\n=== GERENCIAR BAR DA CALOURADA ===")
-                calouradas_disponiveis = sistema.listar_calouradas()
-                print(calouradas_disponiveis)
+                print("\n=== DESFAZER ÚLTIMA OPERAÇÃO ===")
+                print("⚠️  Esta operação irá desfazer a última ação registrada no histórico.")
                 
-                if "Nenhuma calourada cadastrada" in calouradas_disponiveis:
+                historico = sistema.ver_historico(1)
+                print("\nÚltima operação:")
+                print(historico)
+                
+                confirmacao = input("\n❓ Tem certeza que deseja desfazer esta operação? (s/N): ").lower()
+                
+                if confirmacao == 's':
+                    sucesso, mensagem = sistema.desfazer_ultima_operacao()
+                    print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
+                else:
+                    print("\n✓ Operação cancelada")
+                    
+            elif opcao == "10":
+                print("\n=== PESQUISAR NO HISTÓRICO ===")
+                print("💡 Esta funcionalidade permite buscar operações específicas no histórico")
+                
+                print("\nTipo de busca:")
+                print("1. Buscar por tipo de ação (CRIAR_CALOURADA, DEMONSTRAR_INTERESSE, etc.)")
+                print("2. Buscar por nome de participante")
+                print("3. Buscar por ID de calourada")
+                print("4. Buscar nos detalhes")
+                
+                tipo_busca_opcao = input("Escolha uma opção (1-4): ").strip()
+                
+                tipo_busca = None
+                if tipo_busca_opcao == "1":
+                    tipo_busca = "acao"
+                    print("\nTipos de ação disponíveis:")
+                    print("- CRIAR_CALOURADA")
+                    print("- DEMONSTRAR_INTERESSE")
+                    print("- CANCELAR_INTERESSE")
+                    print("- REMOVER_CALOURADA")
+                    print("- DESFAZER")
+                elif tipo_busca_opcao == "2":
+                    tipo_busca = "participante"
+                elif tipo_busca_opcao == "3":
+                    tipo_busca = "calourada_id"
+                elif tipo_busca_opcao == "4":
+                    tipo_busca = "detalhes"
+                else:
+                    print("✗ Opção inválida!")
                     continue
                 
-                try:
-                    calourada_id_input = input("ID da calourada para gerenciar o bar: ").strip()
-                    if not calourada_id_input:
-                        print("↩️  Voltando ao menu principal...")
-                        continue
-                    
-                    calourada_id = int(calourada_id_input)
-                    menu_bar(sistema, calourada_id)
-
-                except ValueError:
-                    print("\n✗ ID da calourada deve ser um número")
-
-            elif opcao == "13":
-                print("\n=== VISUALIZAÇÃO DA ÁRVORE AVL ===")
-                total_calouradas = len(sistema.eventos.in_ordem())
-                nivel_arvore = sistema.eventos.nivel_arvore()
-                total_nos = sistema.eventos.contar_nos()
+                termo_busca = input(f"\nDigite o termo para buscar por {tipo_busca}: ").strip()
+                if not termo_busca:
+                    print("✗ Termo de busca não pode ser vazio!")
+                    continue
                 
-                print(f"📊 Informações da Árvore:")
-                print(f"   • Total de calouradas: {total_calouradas}")
-                print(f"   • Altura da árvore: {nivel_arvore} níveis")
-                print(f"   • Total de nós: {total_nos}")
-                print(f"   • Balanceada: {'✅ Sim' if nivel_arvore <= 1.44 * (total_nos + 1) else '❌ Não'}")
-                
-                if total_calouradas == 0:
-                    print("\n🌳 Árvore vazia - crie algumas calouradas primeiro!")
-                else:
-                    print(f"\n🌳 Estrutura da Árvore AVL:")
-                    print("   (ID = chave, h = altura, b = balanceamento)")
-                    print("   Valores de balanceamento: -1, 0, +1 = árvore balanceada")
-                    print("-" * 50)
-                    visualizacao = sistema.eventos.visualizar_arvore()
-                    print(visualizacao)
-                    print("-" * 50)
-                    
-                    print(f"\n📝 Legenda:")
-                    print(f"   • Filhos à direita (IDs maiores) aparecem acima")
-                    print(f"   • Filhos à esquerda (IDs menores) aparecem abaixo")
-                    print(f"   • h: altura do nó (distância até folha mais distante)")
-                    print(f"   • b: fator de balanceamento (altura esq - altura dir)")
-                    
-                    if nivel_arvore >= 3:
-                        print(f"\n✅ Árvore atende ao requisito: NÍVEL ≥ 3")
-                    else:
-                        print(f"\n⚠️  Para atender ao requisito, crie mais calouradas!")
-                        print(f"    Necessário: pelo menos 4 calouradas para nível 3")
-
+                resultado_busca = sistema.buscar_no_historico(termo_busca, tipo_busca)
+                print("\n" + resultado_busca)
+            
             else:
                 print("\n✗ Opção inválida! Tente novamente.")
             
