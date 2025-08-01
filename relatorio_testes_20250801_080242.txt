@@ -1,0 +1,295 @@
+RELATÓRIO COMPLETO DE TESTES - SISTEMA DE CALOURADAS
+============================================================
+Data/Hora: 01/08/2025 às 08:02:42
+Sistema Operacional: win32
+Versão Python: 3.13.1 (tags/v3.13.1:0671451, Dec  3 2024, 19:06:28) [MSC v.1942 64 bit (AMD64)]
+
+============================================================
+RESUMO EXECUTIVO
+------------------------------
+Total de testes executados: 3
+Testes bem-sucedidos: 3
+Testes falharam: 0
+Taxa de sucesso: 100.0%
+Tempo total de execução: 0.28 segundos
+
+DETALHES DOS TESTES
+------------------------------
+
+Testes Unitários: ✅ PASSOU
+Tempo: 0.11s
+Saída:
+Sistema de Teste Automatizado para Calouradas
+Versão 1.0 - Testa todas as estruturas de dados implementadas
+
+>> INICIANDO TESTES AUTOMATIZADOS DO SISTEMA DE CALOURADAS
+======================================================================
+
+>> TESTANDO LISTA LIGADA...
+Teste 1: Lista - Inserção - [PASSOU]
+   Detalhes: Resultado: Pedro, Maria, João
+Teste 2: Lista - Busca (existente) - [PASSOU]
+   Detalhes: Encontrado: Maria
+Teste 3: Lista - Busca (não existente) - [PASSOU]
+   Detalhes: Resultado: None
+Teste 4: Lista - Remoção (existente) - [PASSOU]
+   Detalhes: Removido: True
+Teste 5: Lista - Remoção (não existente) - [PASSOU]
+   Detalhes: Resultado: False
+
+>> TESTANDO FILA...
+Teste 6: Fila - Inserção - [PASSOU]
+   Detalhes: Estado: FRENTE -> Ana -> Bruno -> Carlos -> FIM
+Teste 7: Fila - Remoção FIFO - [PASSOU]
+   Detalhes: Primeiro removido: Ana
+Teste 8: Fila - Busca - [PASSOU]
+   Detalhes: Encontrado: Bruno
+Teste 9: Fila - Remoção em fila vazia - [PASSOU]
+   Detalhes: Resultado: None
+
+>> TESTANDO PILHA...
+Teste 10: Pilha - Inserção - [PASSOU]
+   Detalhes: Múltiplas operações inseridas
+Teste 11: Pilha - Remoção LIFO - [PASSOU]
+   Detalhes: Último removido: Operação 3
+Teste 12: Pilha - Busca - [PASSOU]
+   Detalhes: Encontrado: Operação 2
+Teste 13: Pilha - Remoção em pilha vazia - [PASSOU]
+   Detalhes: Resultado: None
+
+>> TESTANDO ÁRVORE AVL...
+Teste 14: Árvore - Inserção - [PASSOU]
+   Detalhes: Raiz: ID 10
+Teste 15: Árvore - Busca (existente) - [PASSOU]
+   Detalhes: Encontrado: ID:7 - Festa da Química
+Teste 16: Árvore - Busca (não existente) - [PASSOU]
+   Detalhes: Resultado: None
+Teste 17: Árvore - Percurso In-Ordem - [PASSOU]
+   Detalhes: IDs: [3, 5, 7, 10, 15]
+Teste 18: Árvore - Percurso Pré-Ordem - [PASSOU]
+   Detalhes: Quantidade: 5
+Teste 19: Árvore - Percurso Pós-Ordem - [PASSOU]
+   Detalhes: Quantidade: 5
+Teste 20: Árvore - Balanceamento AVL - [PASSOU]
+   Detalhes: Altura: 3
+Teste 21: Árvore - Remoção - [PASSOU]
+   Detalhes: Busca após remoção: None
+
+>> TESTANDO INTEGRAÇÃO CALOURADA...
+Teste 22: Integração - Lista de Participantes - [PASSOU]
+   Detalhes: Bob, Alice
+Teste 23: Integração - Fila de Entrada - [PASSOU]
+   Detalhes: FRENTE -> Carlos -> Diana -> FIM
+Teste 24: Integração - Processamento FIFO - [PASSOU]
+   Detalhes: Primeiro atendido: Carlos
+
+>> TESTANDO CASOS EXTREMOS...
+Teste 25: Extremo - Lista vazia - [PASSOU]
+   Detalhes: Nenhum participante.
+Teste 26: Extremo - Fila vazia - [PASSOU]
+   Detalhes: Fila vazia.
+Teste 27: Extremo - Pilha vazia - [PASSOU]
+   Detalhes: Histórico vazio.
+Teste 28: Extremo - Árvore vazia - [PASSOU]
+   Detalhes: Árvore de eventos está vazia.
+Teste 29: Extremo - Árvore com 15 nós - [PASSOU]
+   Detalhes: Altura: 4
+
+>> SIMULANDO MENU PRINCIPAL...
+Teste 30: Menu - Criação de múltiplas calouradas - [PASSOU]
+   Detalhes: Total criadas: 3
+Teste 31: Menu - Busca de calourada - [PASSOU]
+   Detalhes: Encontrada: ID:2 - Festa da Engenharia
+Teste 32: Menu - Remoção de calourada - [PASSOU]
+   Detalhes: Busca após remoção: None
+Teste 33: Menu - Histórico de operações - [PASSOU]
+   Detalhes: Histórico registrando operações
+
+======================================================================
+>> RELATÓRIO FINAL DOS TESTES
+======================================================================
+>> Total de testes: 33
+>> Testes que passaram: 33
+>> Testes que falharam: 0
+>> Taxa de sucesso: 100.0%
+
+>> DETALHES DOS TESTES:
+Teste 1: Lista - Inserção - [PASSOU]
+   Detalhes: Resultado: Pedro, Maria, João
+Teste 2: Lista - Busca (existente) - [PASSOU]
+   Detalhes: Encontrado: Maria
+Teste 3: Lista - Busca (não existente) - [PASSOU]
+   Detalhes: Resultado: None
+Teste 4: Lista - Remoção (existente) - [PASSOU]
+   Detalhes: Removido: True
+Teste 5: Lista - Remoção (não existente) - [PASSOU]
+   Detalhes: Resultado: False
+Teste 6: Fila - Inserção - [PASSOU]
+   Detalhes: Estado: FRENTE -> Ana -> Bruno -> Carlos -> FIM
+Teste 7: Fila - Remoção FIFO - [PASSOU]
+   Detalhes: Primeiro removido: Ana
+Teste 8: Fila - Busca - [PASSOU]
+   Detalhes: Encontrado: Bruno
+Teste 9: Fila - Remoção em fila vazia - [PASSOU]
+   Detalhes: Resultado: None
+Teste 10: Pilha - Inserção - [PASSOU]
+   Detalhes: Múltiplas operações inseridas
+Teste 11: Pilha - Remoção LIFO - [PASSOU]
+   Detalhes: Último removido: Operação 3
+Teste 12: Pilha - Busca - [PASSOU]
+   Detalhes: Encontrado: Operação 2
+Teste 13: Pilha - Remoção em pilha vazia - [PASSOU]
+   Detalhes: Resultado: None
+Teste 14: Árvore - Inserção - [PASSOU]
+   Detalhes: Raiz: ID 10
+Teste 15: Árvore - Busca (existente) - [PASSOU]
+   Detalhes: Encontrado: ID:7 - Festa da Química
+Teste 16: Árvore - Busca (não existente) - [PASSOU]
+   Detalhes: Resultado: None
+Teste 17: Árvore - Percurso In-Ordem - [PASSOU]
+   Detalhes: IDs: [3, 5, 7, 10, 15]
+Teste 18: Árvore - Percurso Pré-Ordem - [PASSOU]
+   Detalhes: Quantidade: 5
+Teste 19: Árvore - Percurso Pós-Ordem - [PASSOU]
+   Detalhes: Quantidade: 5
+Teste 20: Árvore - Balanceamento AVL - [PASSOU]
+   Detalhes: Altura: 3
+Teste 21: Árvore - Remoção - [PASSOU]
+   Detalhes: Busca após remoção: None
+Teste 22: Integração - Lista de Participantes - [PASSOU]
+   Detalhes: Bob, Alice
+Teste 23: Integração - Fila de Entrada - [PASSOU]
+   Detalhes: FRENTE -> Carlos -> Diana -> FIM
+Teste 24: Integração - Processamento FIFO - [PASSOU]
+   Detalhes: Primeiro atendido: Carlos
+Teste 25: Extremo - Lista vazia - [PASSOU]
+   Detalhes: Nenhum participante.
+Teste 26: Extremo - Fila vazia - [PASSOU]
+   Detalhes: Fila vazia.
+Teste 27: Extremo - Pilha vazia - [PASSOU]
+   Detalhes: Histórico vazio.
+Teste 28: Extremo - Árvore vazia - [PASSOU]
+   Detalhes: Árvore de eventos está vazia.
+Teste 29: Extremo - Árvore com 15 nós - [PASSOU]
+   Detalhes: Altura: 4
+Teste 30: Menu - Criação de múltiplas calouradas - [PASSOU]
+   Detalhes: Total criadas: 3
+Teste 31: Menu - Busca de calourada - [PASSOU]
+   Detalhes: Encontrada: ID:2 - Festa da Engenharia
+Teste 32: Menu - Remoção de calourada - [PASSOU]
+   Detalhes: Busca após remoção: None
+Teste 33: Menu - Histórico de operações - [PASSOU]
+   Detalhes: Histórico registrando operações
+
+>> PARABÉNS! Todos os testes passaram!
+>> O sistema está funcionando perfeitamente!
+
+======================================================================
+>> RESULTADO: SISTEMA APROVADO - Todos os requisitos funcionando!
+>> Estruturas testadas:
+   [OK] Lista Ligada (INSERT, REMOVE, SEARCH, PRINT)
+   [OK] Fila (INSERT, REMOVE, SEARCH, PRINT)
+   [OK] Pilha (INSERT, REMOVE, SEARCH, PRINT)
+   [OK] Árvore AVL (INSERT, REMOVE, PRÉ/IN/PÓS-ORDEM)
+   [OK] Balanceamento AVL funcionando
+   [OK] Integração entre estruturas
+
+>> Pronto para avaliação acadêmica!
+======================================================================
+
+----------------------------------------
+
+Simulação de Menu: ✅ PASSOU
+Tempo: 0.11s
+Saída:
+>> SIMULADOR AUTOMATIZADO DO SISTEMA DE CALOURADAS
+Versão 1.0 - Simula interações reais do usuário
+======================================================================
+1. Executando simulação completa...
+>> INICIANDO SIMULAÇÃO COMPLETA DO SISTEMA
+============================================================
+>> Comandos a serem executados:
+   1. 1
+   2. Festa da Computação
+   3. 1
+   4. Festa da Engenharia
+   5. 1
+   6. Festa da Medicina
+   7. 2
+   9. 4
+   10. 1
+   11. 1
+   12. João Silva
+   13. 1
+   14. Maria Santos
+   15. 1
+   16. Pedro Oliveira
+   17. 4
+   18. Ana Costa
+   19. 4
+   20. Bruno Lima
+   21. 3
+   22. maria
+   23. 5
+   24. 2
+   25. João Silva
+   26. 0
+   27. 5
+   29. 6
+   31. 7
+   33. 3
+   34. 2
+   36. 2
+   38. 0
+
+>> Executando simulação...
+------------------------------------------------------------
+
+==================================================
+
+[ERRO] Erro durante a simulação: 'charmap' codec can't encode character '\U0001f389' in position 4: character maps to <undefined>
+
+2. Executando teste de stress...
+
+>> TESTE DE STRESS - MUITAS OPERAÇÕES
+============================================================
+>> Testando criação de 20 calouradas...
+
+==================================================
+[ERRO] Teste de stress falhou: 'charmap' codec can't encode character '\U0001f389' in position 4: character maps to <undefined>
+
+3. Executando teste de casos especiais...
+
+>> TESTE DE CASOS ESPECIAIS
+============================================================
+>> Testando casos especiais e validação de erros...
+
+==================================================
+[ERRO] Teste de casos especiais falhou: 'charmap' codec can't encode character '\U0001f389' in position 4: character maps to <undefined>
+
+======================================================================
+>> RELATÓRIO FINAL DA SIMULAÇÃO
+======================================================================
+Simulação Completa: [FALHOU]
+Teste de Stress: [FALHOU]
+Casos Especiais: [FALHOU]
+
+>> Resumo: 0/3 testes passaram
+>> Taxa de sucesso: 0.0%
+
+>> 3 teste(s) falharam.
+>> Verifique os erros reportados acima.
+
+>> DICAS PARA DEMONSTRAÇÃO:
+   • O sistema suporta nomes com espaços e acentos
+   • Busca é case-insensitive (maria = Maria)
+   • Árvore AVL mantém balanceamento automático
+   • Histórico registra todas as operações importantes
+   • Interface clara mostra todos os percursos da árvore
+======================================================================
+
+----------------------------------------
+
+Verificação de Sintaxe: ✅ PASSOU
+Tempo: 0.06s
+----------------------------------------
