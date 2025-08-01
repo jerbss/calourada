@@ -974,7 +974,7 @@ def main():
                 print("\n=== BUSCAR CALOURADA ===")
                 calourada = obter_calourada(sistema)
                 if calourada:
-                    print("\n" + sistema.buscar_calourada(calourada.id_sequencial))
+                    print("\n" + sistema.buscar_calourada(calourada.id))
             
             elif opcao == "3":
                 print("\n" + sistema.listar_calouradas())
@@ -991,7 +991,7 @@ def main():
                 print(f"👥 {calourada.participantes.tamanho} participantes interessados")
                 
                 if confirmar_operacao():
-                    sucesso, mensagem = sistema.remover_calourada(calourada.id_sequencial)
+                    sucesso, mensagem = sistema.remover_calourada(calourada.id)
                     print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
                 else:
                     print("\n✓ Operação cancelada")
@@ -1032,7 +1032,7 @@ def main():
                 
                 periodo = input("📖 Período do curso (1-12): ").strip()
                 
-                sucesso, mensagem = sistema.demonstrar_interesse(calourada.id_sequencial, nome, curso_escolhido, unidade_validada, sexo, periodo)
+                sucesso, mensagem = sistema.demonstrar_interesse(calourada.id, nome, curso_escolhido, unidade_validada, sexo, periodo)
                 print(f"\n{'🎉 ' if sucesso else '✗ '} {mensagem}")
             
             elif opcao == "6":
@@ -1070,14 +1070,14 @@ def main():
                 except ValueError:
                     nome_participante = participante_input
                 
-                sucesso, mensagem = sistema.cancelar_interesse(calourada.id_sequencial, nome_participante)
+                sucesso, mensagem = sistema.cancelar_interesse(calourada.id, nome_participante)
                 print(f"\n{'✓ ' if sucesso else '✗ '} {mensagem}")
             
             elif opcao == "7":
                 print("\n=== LISTAR PARTICIPANTES ===")
                 calourada = obter_calourada(sistema)
                 if calourada:
-                    print("\n" + sistema.listar_participantes(calourada.id_sequencial))
+                    print("\n" + sistema.listar_participantes(calourada.id))
             
             elif opcao == "8":
                 print("\n=== VER HISTÓRICO ===")
